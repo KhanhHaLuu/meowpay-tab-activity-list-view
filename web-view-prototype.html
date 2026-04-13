@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MeowPay — Shared Bill</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ======== CSS VARIABLES ======== */
+:root {
+  --primary: #D4881A;
+  --primary-soft: #E8A94A;
+  --primary-container: #FFF5E6;
+  --indigo: #4350B5;
+  --indigo-deep: #2D3A8C;
+  --indigo-light: #ECEEFF;
+  --surface: #FDFBF8;
+  --surface-dim: #F6F3EF;
+  --surface-container: #EFECE8;
+  --on-surface: #1A1816;
+  --on-surface-variant: #57534E;
+  --on-surface-subtle: #9C9590;
+  --outline: #8C877F;
+  --outline-variant: #D6D1CA;
+  --muted: #A8A29E;
+  --error: #DC362E;
+  --error-light: #FEF2F2;
+  --success: #2E9E5B;
+  --success-light: #F0FDF4;
+  --font-display: 'Bricolage Grotesque', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --shape-full: 9999px;
+  --shape-xl: 24px;
+  --shape-lg: 20px;
+  --shape-md: 14px;
+  --shape-sm: 10px;
+}
+
+/* ======== RESET ======== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  width: 100%; height: 100%;
+  font-family: var(--font-body);
+  background-color: #E8E4DF;
+}
+
+/* ======== LAYOUT ======== */
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 40px;
+  padding: 40px 20px;
+  min-height: 100vh;
+}
+
+/* ======== PHONE FRAME ======== */
+.phone-col { display: flex; flex-direction: column; align-items: center; }
+.frame-label {
+  font-family: var(--font-display); font-size: 11px; font-weight: 700;
+  color: var(--outline); text-align: center; margin-bottom: 10px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+.phone {
+  width: 375px; height: 812px;
+  background: #FFFFFF;
+  border-radius: 40px; overflow: hidden;
+  position: relative; display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.5);
+}
+
+/* ======== STATUS BAR ======== */
+.status-bar {
+  height: 54px; padding: 14px 24px 0;
+  display: flex; justify-content: space-between; align-items: center;
+  flex-shrink: 0; background: #fff;
+}
+.status-time {
+  font-family: var(--font-body); font-weight: 600; font-size: 15px;
+  color: var(--on-surface); letter-spacing: -0.01em;
+}
+.status-icons { display: flex; align-items: center; gap: 5px; }
+.status-icons svg { height: 12px; fill: var(--on-surface); }
+
+/* ======== BROWSER CHROME ======== */
+.browser-bar {
+  height: 36px; padding: 0 16px;
+  background: var(--surface-dim);
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; flex-shrink: 0;
+  border-bottom: 1px solid var(--outline-variant);
+}
+.browser-url {
+  flex: 1; height: 26px;
+  background: #fff; border-radius: var(--shape-full);
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 12px;
+  font-family: var(--font-body); font-size: 11px; color: var(--muted);
+}
+.browser-url .lock { margin-right: 4px; font-size: 10px; }
+
+/* ======== PAGE CONTENT (scrollable) ======== */
+.page-scroll {
+  flex: 1; overflow-y: auto;
+  background: var(--surface);
+}
+.page-scroll::-webkit-scrollbar { display: none; }
+
+/* ======== MEOWPAY BRANDING ======== */
+.brand-header {
+  padding: 24px 24px 0;
+  display: flex; align-items: center; gap: 8px;
+}
+.brand-logo {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: var(--primary); display: flex;
+  align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.brand-name {
+  font-family: var(--font-display); font-size: 15px; font-weight: 700;
+  color: var(--on-surface); letter-spacing: -0.02em;
+}
+
+/* ======== BILL SUMMARY CARD ======== */
+.bill-summary {
+  margin: 16px 16px 0;
+  background: #fff;
+  border-radius: var(--shape-xl); padding: 24px;
+  border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+.bill-emoji {
+  font-size: 36px; margin-bottom: 12px;
+}
+.bill-title {
+  font-family: var(--font-display); font-size: 22px; font-weight: 800;
+  color: var(--on-surface); letter-spacing: -0.03em;
+}
+.bill-meta {
+  display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px;
+}
+.bill-meta-item {
+  display: flex; align-items: center; gap: 4px;
+  font-family: var(--font-body); font-size: 12px; color: var(--on-surface-subtle);
+}
+.bill-meta-item svg { width: 14px; height: 14px; fill: var(--muted); }
+.bill-total {
+  margin-top: 16px; padding-top: 16px;
+  border-top: 1px solid rgba(0,0,0,0.05);
+}
+.bill-total-label {
+  font-family: var(--font-body); font-size: 11px; font-weight: 600;
+  color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase;
+}
+.bill-total-amount {
+  font-family: var(--font-body); font-size: 32px; font-weight: 700;
+  color: var(--on-surface); letter-spacing: -0.03em; line-height: 1.1;
+  margin-top: 4px;
+}
+
+/* ======== MESSAGE + STICKER ======== */
+.message-section {
+  margin: 12px 16px 0;
+  background: #fff;
+  border-radius: var(--shape-lg); padding: 16px;
+  border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+.message-label {
+  font-family: var(--font-body); font-size: 11px; font-weight: 600;
+  color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.message-text {
+  font-family: var(--font-body); font-size: 15px; color: var(--on-surface);
+  line-height: 1.5;
+  padding: 12px 16px;
+  background: var(--surface-dim); border-radius: var(--shape-md);
+}
+.sticker-img {
+  display: flex; justify-content: center;
+  margin-top: 12px;
+}
+.sticker-img img {
+  width: 160px; height: auto;
+}
+
+/* ======== CONVERSION BANNER ======== */
+.conversion-banner {
+  margin: 16px 16px 0;
+  padding: 20px;
+  background: linear-gradient(135deg, var(--indigo-light) 0%, #F5F3FF 100%);
+  border-radius: var(--shape-lg);
+  border: 1px solid rgba(67,80,181,0.12);
+  text-align: center;
+}
+.conversion-warning {
+  font-family: var(--font-body); font-size: 13px;
+  color: var(--on-surface-variant); line-height: 1.5;
+  margin-bottom: 12px;
+}
+.conversion-cta {
+  font-family: var(--font-display); font-size: 14px; font-weight: 700;
+  color: var(--indigo); line-height: 1.4;
+  margin-bottom: 16px;
+}
+.appstore-badge {
+  display: inline-block;
+}
+.appstore-badge img {
+  height: 44px; width: auto;
+}
+/* SVG App Store badge fallback */
+.appstore-badge-svg {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 20px;
+  background: #000; border-radius: 10px;
+  color: #fff; text-decoration: none;
+  transition: opacity 0.15s;
+}
+.appstore-badge-svg:active { opacity: 0.8; }
+.appstore-badge-svg .apple-icon { font-size: 22px; line-height: 1; }
+.appstore-badge-svg .badge-text {
+  display: flex; flex-direction: column; text-align: left;
+}
+.appstore-badge-svg .badge-small {
+  font-family: var(--font-body); font-size: 9px; font-weight: 400;
+  letter-spacing: 0.02em; line-height: 1;
+}
+.appstore-badge-svg .badge-large {
+  font-family: var(--font-body); font-size: 16px; font-weight: 600;
+  letter-spacing: -0.01em; line-height: 1.2;
+}
+
+/* ======== BREAKDOWN ======== */
+.breakdown-section {
+  margin: 16px 16px 0;
+  background: #fff;
+  border-radius: var(--shape-lg); padding: 16px;
+  border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+.breakdown-label {
+  font-family: var(--font-body); font-size: 11px; font-weight: 600;
+  color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.breakdown-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0;
+}
+.breakdown-item + .breakdown-item {
+  border-top: 1px solid var(--surface-dim);
+}
+.breakdown-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 13px; font-weight: 700;
+  color: #fff; flex-shrink: 0;
+}
+.breakdown-info { flex: 1; min-width: 0; }
+.breakdown-name {
+  font-family: var(--font-display); font-size: 14px; font-weight: 600;
+  color: var(--on-surface);
+}
+.breakdown-role {
+  font-family: var(--font-body); font-size: 11px; color: var(--muted);
+  margin-top: 1px;
+}
+.breakdown-amount {
+  font-family: var(--font-body); font-size: 15px; font-weight: 700;
+  letter-spacing: -0.01em; flex-shrink: 0;
+}
+.breakdown-amount.creditor { color: var(--success); }
+.breakdown-amount.debtor { color: var(--on-surface); }
+
+/* ======== QR SECTION ======== */
+.qr-section-web {
+  margin: 16px 16px 0;
+  padding: 20px;
+  background: #fff;
+  border-radius: var(--shape-lg);
+  border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  display: flex; flex-direction: column; align-items: center;
+}
+.qr-section-label {
+  font-family: var(--font-body); font-size: 11px; font-weight: 600;
+  color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.qr-box {
+  width: 160px; height: 160px;
+  background: var(--surface-dim);
+  border-radius: var(--shape-md);
+  border: 2px dashed var(--outline-variant);
+  display: flex; align-items: center; justify-content: center;
+}
+.qr-box svg { width: 56px; height: 56px; fill: var(--muted); }
+.qr-info {
+  margin-top: 10px; text-align: center;
+}
+.qr-info-name {
+  font-family: var(--font-body); font-size: 14px; font-weight: 600; color: var(--on-surface);
+}
+.qr-info-bank {
+  font-family: var(--font-body); font-size: 12px; color: var(--muted); margin-top: 2px;
+}
+
+/* ======== FOOTER ======== */
+.page-footer {
+  padding: 24px 16px 32px;
+  text-align: center;
+}
+.footer-text {
+  font-family: var(--font-body); font-size: 11px; color: var(--muted);
+}
+.footer-text a { color: var(--indigo); text-decoration: none; font-weight: 600; }
+
+/* ======== HOME INDICATOR ======== */
+.home-indicator {
+  height: 34px;
+  display: flex; align-items: flex-end; justify-content: center;
+  padding-bottom: 10px; flex-shrink: 0;
+  background: var(--surface);
+}
+.home-indicator-bar {
+  width: 134px; height: 5px;
+  background: var(--on-surface); border-radius: 3px; opacity: 0.18;
+}
+
+/* ======== DESKTOP WEB VIEW ======== */
+.desktop-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.desktop-browser {
+  width: 1024px;
+  background: #FFFFFF;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  transform: scale(0.55);
+  transform-origin: top center;
+}
+
+/* macOS-like title bar */
+.desktop-title-bar {
+  height: 32px;
+  background: linear-gradient(to bottom, #F5F5F5, #ECECEC);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 8px;
+  border-bottom: 1px solid #D0D0D0;
+  flex-shrink: 0;
+}
+
+.desktop-traffic-lights {
+  display: flex;
+  gap: 8px;
+}
+
+.desktop-traffic-light {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.desktop-traffic-light.red { background: #FF5F56; }
+.desktop-traffic-light.yellow { background: #FFBD2E; }
+.desktop-traffic-light.green { background: #27C93F; }
+
+.desktop-address-bar {
+  flex: 1;
+  height: 24px;
+  background: #F5F5F5;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 350px;
+}
+
+.desktop-address-bar .lock {
+  margin-right: 4px;
+  font-size: 11px;
+}
+
+.desktop-address-bar .url {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Desktop page content container */
+.desktop-page-content {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+}
+
+.desktop-page-content::-webkit-scrollbar { display: none; }
+
+/* Wrapper to center content and set max-width */
+.desktop-content-wrapper {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Desktop-specific overrides */
+.desktop-view.bill-summary,
+.desktop-view.message-section,
+.desktop-view.conversion-banner,
+.desktop-view.breakdown-section,
+.desktop-view.qr-section-web,
+.desktop-view.brand-header {
+  margin: 0;
+}
+
+.desktop-view .sticker-img img {
+  width: 140px;
+  height: auto;
+}
+
+.desktop-view.page-footer {
+  padding: 32px 0;
+}
+
+.desktop-view.save-qr-btn {
+  margin: 0 auto;
+}
+
+/* Container layout adjustments */
+.container {
+  flex-wrap: wrap;
+  gap: 40px;
+}
+
+/* ======== SAVE QR BUTTON ======== */
+.save-qr-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px auto 0;
+  padding: 12px 24px;
+  background: #fff;
+  border: 1.5px solid var(--outline-variant);
+  border-radius: var(--shape-full);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--on-surface);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.save-qr-btn:active { background: var(--surface-dim); }
+.save-qr-btn svg { width: 18px; height: 18px; fill: var(--on-surface-variant); }
+</style>
+</head>
+<body>
+
+<!-- SVG defs -->
+<svg style="display:none"><defs>
+  <symbol id="ico-wallet" viewBox="0 0 24 24"><path d="M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28A2 2 0 0022 15V9a2 2 0 00-1-1.72zM20 9v6h-7V9h7zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2H5z"/><circle cx="16" cy="12" r="1.5"/></symbol>
+  <symbol id="ico-calendar" viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/></symbol>
+  <symbol id="ico-people" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></symbol>
+  <symbol id="ico-qr" viewBox="0 0 24 24"><path d="M3 11h8V3H3v8zm2-6h4v4H5V5zm8-2v8h8V3h-8zm6 6h-4V5h4v4zM3 21h8v-8H3v8zm2-6h4v4H5v-4zm13-2h-2v4h2v2h-4v-2H8v-2h2v-2h2v4h2v-4h4v2zm0 4h2v2h-2v-2zm-4 2h2v2h-2v-2z"/></symbol>
+</defs></svg>
+
+
+<div class="container">
+
+<!-- ═══════ MOBILE WEB VIEW ═══════ -->
+<div class="phone-col">
+  <div class="frame-label">Mobile Web View — Non-User</div>
+  <div class="phone">
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <span class="status-time">16:35</span>
+      <div class="status-icons">
+        <svg viewBox="0 0 18 12" width="18"><path d="M1 4.2C3.7 1.5 7.1 0 10.7 0s7 1.5 9.7 4.2l-1.4 1.4C16.7 3.3 13.8 2 10.7 2S4.7 3.3 2.4 5.6L1 4.2z" transform="scale(0.85)"/><path d="M5 8.2c1.6-1.6 3.6-2.4 5.7-2.4s4.1.8 5.7 2.4l-1.4 1.4c-1.2-1.2-2.7-1.8-4.3-1.8s-3.1.6-4.3 1.8L5 8.2z" transform="scale(0.85)"/><circle cx="9.1" cy="11" r="1.5"/></svg>
+        <svg viewBox="0 0 24 12" width="26" height="13"><rect x="0" y="1" width="22" height="11" rx="2.5" ry="2.5" stroke="currentColor" stroke-width="1" fill="none" opacity="0.35"/><rect x="22.5" y="4.5" width="1.5" height="4" rx="0.75" fill="currentColor" opacity="0.35"/><rect x="1.5" y="2.5" width="16" height="8" rx="1.5" fill="#3BCC5E"/></svg>
+      </div>
+    </div>
+
+    <!-- Browser Chrome -->
+    <div class="browser-bar">
+      <div class="browser-url">
+        <span class="lock">🔒</span>
+        meomeopay.com/bill/a3f8...
+      </div>
+    </div>
+
+    <!-- Page Content -->
+    <div class="page-scroll">
+
+      <!-- MeowPay branding -->
+      <div class="brand-header">
+        <div class="brand-logo">🐱</div>
+        <div class="brand-name">MeowPay</div>
+      </div>
+
+      <!-- Bill Summary -->
+      <div class="bill-summary">
+        <div class="bill-emoji">🧾</div>
+        <div class="bill-title">Ăn trưa</div>
+        <div class="bill-meta">
+          <div class="bill-meta-item">
+            <svg><use href="#ico-calendar"/></svg>
+            09/04/2026
+          </div>
+          <div class="bill-meta-item">
+            <svg><use href="#ico-wallet"/></svg>
+            Paid by Hà
+          </div>
+          <div class="bill-meta-item">
+            <svg><use href="#ico-people"/></svg>
+            3 people
+          </div>
+        </div>
+        <div class="bill-total">
+          <div class="bill-total-label">Total Amount</div>
+          <div class="bill-total-amount">200.000đ</div>
+        </div>
+      </div>
+
+      <!-- Message + Sticker -->
+      <div class="message-section">
+        <div class="message-label">Message</div>
+        <div class="message-text">Anh em trả tiền sớm nhé</div>
+        <div class="sticker-img">
+          <img src="data:image/webp;base64,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" alt="MeowPay sticker" />
+        </div>
+      </div>
+
+
+      <!-- QR Code -->
+      <div class="qr-section-web">
+        <div class="qr-section-label">Scan to pay</div>
+        <div class="qr-box">
+          <svg><use href="#ico-qr"/></svg>
+        </div>
+        <div class="qr-info">
+          <div class="qr-info-name">Hà Lưu</div>
+          <div class="qr-info-bank">Vietcombank · ****3456</div>
+        </div>
+      </div>
+
+      <!-- Save QR -->
+      <button class="save-qr-btn">
+        <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+        Save QR
+      </button>
+
+      <!-- Breakdown -->
+      <div class="breakdown-section">
+        <div class="breakdown-label">Split Details</div>
+        <div class="breakdown-item">
+          <div class="breakdown-avatar" style="background: var(--primary);">H</div>
+          <div class="breakdown-info">
+            <div class="breakdown-name">Hà</div>
+            <div class="breakdown-role">Paid the full amount</div>
+          </div>
+          <div class="breakdown-amount creditor">+133.334đ</div>
+        </div>
+        <div class="breakdown-item">
+          <div class="breakdown-avatar" style="background: var(--indigo);">P</div>
+          <div class="breakdown-info">
+            <div class="breakdown-name">Phuc</div>
+            <div class="breakdown-role">Owes Hà</div>
+          </div>
+          <div class="breakdown-amount debtor">66.667đ</div>
+        </div>
+        <div class="breakdown-item">
+          <div class="breakdown-avatar" style="background: #7C3AED;">M</div>
+          <div class="breakdown-info">
+            <div class="breakdown-name">Minh</div>
+            <div class="breakdown-role">Owes Hà</div>
+          </div>
+          <div class="breakdown-amount debtor">66.667đ</div>
+        </div>
+      </div>
+
+      <!-- Conversion Banner -->
+      <div class="conversion-banner">
+        <div class="conversion-warning">Bạn sẽ không nhận được thông báo khi bill được cập nhật.</div>
+        <div class="conversion-cta">Tải MeowPay để xem cập nhật và phản hồi bill</div>
+        <a href="#" class="appstore-badge-svg">
+          <span class="apple-icon">&#63743;</span>
+          <span class="badge-text">
+            <span class="badge-small">Download on the</span>
+            <span class="badge-large">App Store</span>
+          </span>
+        </a>
+      </div>
+
+      <!-- Footer -->
+      <div class="page-footer">
+        <div class="footer-text">Powered by <a href="#">MeowPay</a> · Bill splitting made simple</div>
+      </div>
+    </div>
+
+    <!-- Home Indicator -->
+    <div class="home-indicator"><div class="home-indicator-bar"></div></div>
+  </div>
+</div>
+
+<!-- ═══════ DESKTOP WEB VIEW ═══════ -->
+<div class="desktop-col">
+  <div class="frame-label">Desktop Web View — Non-User</div>
+  <div class="desktop-browser">
+
+    <!-- macOS Title Bar -->
+    <div class="desktop-title-bar">
+      <div class="desktop-traffic-lights">
+        <div class="desktop-traffic-light red"></div>
+        <div class="desktop-traffic-light yellow"></div>
+        <div class="desktop-traffic-light green"></div>
+      </div>
+      <div class="desktop-address-bar">
+        <span class="lock">🔒</span>
+        <span class="url">meomeopay.com/bill/a3f8...</span>
+      </div>
+    </div>
+
+    <!-- Page Content -->
+    <div class="desktop-page-content">
+      <div class="desktop-content-wrapper">
+
+        <!-- MeowPay branding -->
+        <div class="brand-header desktop-view">
+          <div class="brand-logo">🐱</div>
+          <div class="brand-name">MeowPay</div>
+        </div>
+
+        <!-- Bill Summary -->
+        <div class="bill-summary desktop-view">
+          <div class="bill-emoji">🧾</div>
+          <div class="bill-title">Ăn trưa</div>
+          <div class="bill-meta">
+            <div class="bill-meta-item">
+              <svg viewBox="0 0 24 24"><use href="#ico-calendar"/></svg>
+              15 Apr 2025
+            </div>
+            <div class="bill-meta-item">
+              <svg viewBox="0 0 24 24"><use href="#ico-people"/></svg>
+              3 people
+            </div>
+          </div>
+          <div class="bill-total">
+            <div class="bill-total-label">Total Bill</div>
+            <div class="bill-total-amount">400.000đ</div>
+          </div>
+        </div>
+
+        <!-- Message + Sticker -->
+        <div class="message-section desktop-view">
+          <div class="message-label">Message</div>
+          <div class="message-text">Anh em trả tiền sớm nhé</div>
+          <div class="sticker-img">
+            <img src="data:image/webp;base64,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" alt="MeowPay sticker" />
+          </div>
+        </div>
+
+        <!-- QR Code -->
+        <div class="qr-section-web desktop-view">
+          <div class="qr-section-label">Scan to pay</div>
+          <div class="qr-box">
+            <svg><use href="#ico-qr"/></svg>
+          </div>
+          <div class="qr-info">
+            <div class="qr-info-name">Hà Lưu</div>
+            <div class="qr-info-bank">Vietcombank · ****3456</div>
+          </div>
+        </div>
+
+        <!-- Save QR -->
+        <button class="save-qr-btn desktop-view">
+          <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          Save QR
+        </button>
+
+        <!-- Breakdown -->
+        <div class="breakdown-section desktop-view">
+          <div class="breakdown-label">Split Details</div>
+          <div class="breakdown-item">
+            <div class="breakdown-avatar" style="background: var(--primary);">H</div>
+            <div class="breakdown-info">
+              <div class="breakdown-name">Hà</div>
+              <div class="breakdown-role">Paid the full amount</div>
+            </div>
+            <div class="breakdown-amount creditor">+133.334đ</div>
+          </div>
+          <div class="breakdown-item">
+            <div class="breakdown-avatar" style="background: var(--indigo);">P</div>
+            <div class="breakdown-info">
+              <div class="breakdown-name">Phuc</div>
+              <div class="breakdown-role">Owes Hà</div>
+            </div>
+            <div class="breakdown-amount debtor">66.667đ</div>
+          </div>
+          <div class="breakdown-item">
+            <div class="breakdown-avatar" style="background: #7C3AED;">M</div>
+            <div class="breakdown-info">
+              <div class="breakdown-name">Minh</div>
+              <div class="breakdown-role">Owes Hà</div>
+            </div>
+            <div class="breakdown-amount debtor">66.667đ</div>
+          </div>
+        </div>
+
+        <!-- Conversion Banner -->
+        <div class="conversion-banner desktop-view">
+          <div class="conversion-warning">Bạn sẽ không nhận được thông báo khi bill được cập nhật.</div>
+          <div class="conversion-cta">Tải MeowPay để xem cập nhật và phản hồi bill</div>
+          <a href="#" class="appstore-badge-svg">
+            <span class="apple-icon">&#63743;</span>
+            <span class="badge-text">
+              <span class="badge-small">Download on the</span>
+              <span class="badge-large">App Store</span>
+            </span>
+          </a>
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="page-footer desktop-view">
+        <div class="footer-text">Powered by <a href="#">MeowPay</a> · Bill splitting made simple</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</div>
+
+<!-- Navigation -->
+<nav style="position:fixed;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:rgba(26,24,22,.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);font-family:'DM Sans',sans-serif;z-index:9999">
+  <a href="detail-view-prototype.html" style="display:inline-flex;align-items:center;gap:6px;color:#FFF5E6;text-decoration:none;font-size:14px;font-weight:600;padding:8px 16px;border-radius:9999px;background:rgba(212,136,26,.25)"><span style="font-size:16px">&larr;</span> Prev</a>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span style="width:6px;height:6px;border-radius:50%;background:#57534E"></span>
+    <span style="width:6px;height:6px;border-radius:50%;background:#57534E"></span>
+    <span style="width:8px;height:8px;border-radius:50%;background:#D4881A"></span>
+    <span style="width:6px;height:6px;border-radius:50%;background:#57534E"></span>
+  </div>
+  <a href="activity-list-prototype.html" style="display:inline-flex;align-items:center;gap:6px;color:#FFF5E6;text-decoration:none;font-size:14px;font-weight:600;padding:8px 16px;border-radius:9999px;background:rgba(212,136,26,.25)">Next <span style="font-size:16px">&rarr;</span></a>
+</nav>
+</body>
+</html>
